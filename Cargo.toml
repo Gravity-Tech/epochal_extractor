@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+    "poller_core",
+    "etherium_lu",
+    "api_server",
+    "evm_event_scanner",
+    "database",
+]
