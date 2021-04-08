@@ -75,7 +75,7 @@ services:
         - app-network
   lp_wdpi_bnb_subs_extractor:
     image: badconfig/graviton_subs_extractor
-    container_name: lp_wdpi/bnb_subs_extractor
+    container_name: lp_wdpi_bnb_subs_extractor
     tty: true
     environment:
       - CHAIN_URL=https://api.ftmscan.com/
