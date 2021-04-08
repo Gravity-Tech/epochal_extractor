@@ -1,5 +1,5 @@
 [package]
-name = "etherium_lu"
+name = "ftm_pulse_catcher"
 version = "0.1.0"
 authors = ["badconfig <array.clean@gmail.com>"]
 edition = "2018"

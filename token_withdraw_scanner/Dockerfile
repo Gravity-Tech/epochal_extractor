@@ -16,9 +16,9 @@ RUN apt-get update && \
         --no-install-recommends
 RUN apt-get update && apt-get -y install ca-certificates libssl-dev && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /extractor/target/release/api_server /api_server/api_server
-WORKDIR /api_server
-EXPOSE 8088
+COPY --from=builder /extractor/target/release/token_withdraw_scanner /extractor_core/token_withdraw_scanner
+WORKDIR /extractor_core
+EXPOSE 8000
 
 
-CMD ["/api_server/api_server"]
+CMD ["/extractor_core/token_withdraw_scanner"]

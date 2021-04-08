@@ -1,5 +1,91 @@
 version: '3'
 services:
+  gton_extractor_withdraw_wusdn/bnb:
+    image: badconfig/lp_withdraw_extractor
+    container_name: gton_extractor_deposit_wusdn/bnb
+    tty: true
+    environment:
+      - CHAIN_URL=https://api.bscscan.com/
+      - API_KEY=28N6H9NXCCT6F3VAH1SQAJJXKYPHSFYBBA
+      - TOKEN_ADDRESS=0x069784dd0e8326c849075270c14903b77a416cc2
+      - TRANSFER_EVENT_TOPIC=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
+      - WALLET_ADDR=0x8e0d85c79e47498A6eE3C82c3C6F4105ab666737
+      - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
+      - POLLER_ID=18
+      - TOKEN_DIGITS=18
+    networks:
+        - app-network
+  gton_extractor_withdraw_wdpi/bnb:
+    image: badconfig/lp_withdraw_extractor
+    container_name: gton_extractor_deposit_wdpi/bnb
+    tty: true
+    environment:
+      - CHAIN_URL=https://api.bscscan.com/
+      - API_KEY=74BI181QSASXCMIUN7UACFX33EU45F8NII
+      - TOKEN_ADDRESS=0x57d2879fa09fbc93d0b21122819a408a52a2ddaa
+      - TRANSFER_EVENT_TOPIC=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
+      - WALLET_ADDR=0x8e0d85c79e47498A6eE3C82c3C6F4105ab666737
+      - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
+      - POLLER_ID=17
+      - TOKEN_DIGITS=18
+    networks:
+        - app-network
+  gton_extractor_deposit_wusdn/bnb:
+    image: badconfig/gton_extractor
+    container_name: gton_extractor_deposit_wusdn/bnb
+    tty: true
+    environment:
+      - CHAIN_URL=https://api.bscscan.com/
+      - API_KEY=EKJSR6MTUYHETQQ4NDK9D3YJZI3TWNRD39
+      - TOKEN_ADDRESS=0x069784dd0e8326c849075270c14903b77a416cc2
+      - TRANSFER_EVENT_TOPIC=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
+      - WALLET_ADDR=0x8e0d85c79e47498A6eE3C82c3C6F4105ab666737
+      - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
+      - POLLER_ID=18
+      - TOKEN_DIGITS=18
+    networks:
+        - app-network
+  gton_extractor_deposit_wdpi/bnb:
+    image: badconfig/gton_extractor
+    container_name: gton_extractor_deposit_wdpi/bnb
+    tty: true
+    environment:
+      - CHAIN_URL=https://api.bscscan.com/
+      - API_KEY=B8UD9JWSTC8IFXIYSUYEWT6FZ3ZTYKAMG4
+      - TOKEN_ADDRESS=0x57d2879fa09fbc93d0b21122819a408a52a2ddaa
+      - TRANSFER_EVENT_TOPIC=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
+      - WALLET_ADDR=0x8e0d85c79e47498A6eE3C82c3C6F4105ab666737
+      - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
+      - POLLER_ID=17
+      - TOKEN_DIGITS=18
+    networks:
+        - app-network
+  lp_wusdn/bnb_subs_extractor:
+    image: badconfig/graviton_subs_extractor
+    container_name: lp_wudn/bnb_subs_extractor
+    tty: true
+    environment:
+      - CHAIN_URL=https://api.ftmscan.com/
+      - API_KEY=Q5XTIQA5F8JBAPBUXPAUD7YC8U4XX3I6SC
+      - TOKEN_ADDRESS=0x069784dd0e8326c849075270c14903b77a416cc2
+      - TRANSFER_EVENT_TOPIC=0xc817d75deaa278e988c41cf549ef38fe195ab65e0e64cd67ba47f0d185690d58
+      - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
+      - POLLER_ID=16
+    networks:
+        - app-network
+  lp_wdpi/bnb_subs_extractor:
+    image: badconfig/graviton_subs_extractor
+    container_name: lp_wdpi/bnb_subs_extractor
+    tty: true
+    environment:
+      - CHAIN_URL=https://api.ftmscan.com/
+      - API_KEY=JU53HUTB11CQHYIY7KJ3KCWTUNRVDXG6X5
+      - TOKEN_ADDRESS=0x57d2879fa09fbc93d0b21122819a408a52a2ddaa
+      - TRANSFER_EVENT_TOPIC=0xc817d75deaa278e988c41cf549ef38fe195ab65e0e64cd67ba47f0d185690d58
+      - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
+      - POLLER_ID=15
+    networks:
+        - app-network
   graviton_subs_extractor:
     image: badconfig/graviton_subs_extractor
     container_name: graviton_subs_extractor
@@ -8,7 +94,7 @@ services:
       - CHAIN_URL=https://api.ftmscan.com/
       - API_KEY=584WA7RD7373A1SUHS1KTT8SYMIA9FIBW4
       - TOKEN_ADDRESS=0xA25D2E724774baaBAFb20fA61177AD36cBb29068
-      - TRANSFER_EVENT_TOPIC=0x9ed053bb818ff08b8353cd46f78db1f0799f31c9e4458fdb425c10eccd2efc44
+      - TRANSFER_EVENT_TOPIC=0xc817d75deaa278e988c41cf549ef38fe195ab65e0e64cd67ba47f0d185690d58
       - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
       - POLLER_ID=14
     networks:

@@ -2,7 +2,9 @@
 
 members = [
     "poller_core",
-    "etherium_lu",
+    "token_transfer_scanner",
+    "token_withdraw_scanner",
+    "ftm_pulse_catcher",
     "api_server",
     "evm_event_scanner",
     "database",
