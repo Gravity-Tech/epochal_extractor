@@ -1,8 +1,8 @@
 version: '3'
 services:
-  gton_extractor_withdraw_wusdn/bnb:
+  gton_extractor_withdraw_wusdn_bnb:
     image: badconfig/lp_withdraw_extractor
-    container_name: gton_extractor_deposit_wusdn/bnb
+    container_name: gton_extractor_deposit_wusdn_bnb
     tty: true
     environment:
       - CHAIN_URL=https://api.bscscan.com/
@@ -15,9 +15,9 @@ services:
       - TOKEN_DIGITS=18
     networks:
         - app-network
-  gton_extractor_withdraw_wdpi/bnb:
+  gton_extractor_withdraw_wdpi_bnb:
     image: badconfig/lp_withdraw_extractor
-    container_name: gton_extractor_deposit_wdpi/bnb
+    container_name: gton_extractor_deposit_wdpi_bnb
     tty: true
     environment:
       - CHAIN_URL=https://api.bscscan.com/
@@ -30,9 +30,9 @@ services:
       - TOKEN_DIGITS=18
     networks:
         - app-network
-  gton_extractor_deposit_wusdn/bnb:
+  gton_extractor_deposit_wusdn_bnb:
     image: badconfig/gton_extractor
-    container_name: gton_extractor_deposit_wusdn/bnb
+    container_name: gton_extractor_deposit_wusdn_bnb
     tty: true
     environment:
       - CHAIN_URL=https://api.bscscan.com/
@@ -45,9 +45,9 @@ services:
       - TOKEN_DIGITS=18
     networks:
         - app-network
-  gton_extractor_deposit_wdpi/bnb:
+  gton_extractor_deposit_wdpi_bnb:
     image: badconfig/gton_extractor
-    container_name: gton_extractor_deposit_wdpi/bnb
+    container_name: gton_extractor_deposit_wdpi_bnb
     tty: true
     environment:
       - CHAIN_URL=https://api.bscscan.com/
@@ -60,9 +60,9 @@ services:
       - TOKEN_DIGITS=18
     networks:
         - app-network
-  lp_wusdn/bnb_subs_extractor:
+  lp_wusdn_bnb_subs_extractor:
     image: badconfig/graviton_subs_extractor
-    container_name: lp_wudn/bnb_subs_extractor
+    container_name: lp_wudn_bnb_subs_extractor
     tty: true
     environment:
       - CHAIN_URL=https://api.ftmscan.com/
@@ -73,7 +73,7 @@ services:
       - POLLER_ID=16
     networks:
         - app-network
-  lp_wdpi/bnb_subs_extractor:
+  lp_wdpi_bnb_subs_extractor:
     image: badconfig/graviton_subs_extractor
     container_name: lp_wdpi/bnb_subs_extractor
     tty: true
