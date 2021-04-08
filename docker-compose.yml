@@ -2,7 +2,7 @@ version: '3'
 services:
   gton_extractor_withdraw_wusdn_bnb:
     image: badconfig/lp_withdraw_extractor
-    container_name: gton_extractor_deposit_wusdn_bnb
+    container_name: gton_extractor_withdraw_wusdn_bnb
     tty: true
     environment:
       - CHAIN_URL=https://api.bscscan.com/
@@ -17,7 +17,7 @@ services:
         - app-network
   gton_extractor_withdraw_wdpi_bnb:
     image: badconfig/lp_withdraw_extractor
-    container_name: gton_extractor_deposit_wdpi_bnb
+    container_name: gton_extractor_withdraw_wdpi_bnb
     tty: true
     environment:
       - CHAIN_URL=https://api.bscscan.com/
