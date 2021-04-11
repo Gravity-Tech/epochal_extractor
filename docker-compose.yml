@@ -12,7 +12,7 @@ services:
       - WALLET_ADDR=0x0000000000000000000000008e0d85c79e47498a6ee3c82c3c6f4105ab666737
       - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
       - METADATA=0000000000000000000000000000000000000000000000000000000000000002
-      - POLLER_ID=18
+      - POLLER_ID=20
       - TOKEN_DIGITS=18
     networks:
         - app-network
@@ -28,7 +28,7 @@ services:
       - WALLET_ADDR=0x0000000000000000000000008e0d85c79e47498a6ee3c82c3c6f4105ab666737
       - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
       - METADATA=0000000000000000000000000000000000000000000000000000000000000002
-      - POLLER_ID=17
+      - POLLER_ID=19
       - TOKEN_DIGITS=18
     networks:
         - app-network
