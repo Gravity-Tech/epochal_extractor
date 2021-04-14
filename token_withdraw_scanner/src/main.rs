@@ -123,18 +123,24 @@ impl EventScannerAdapter<Data> for EthScan {
         let amount: [u8;32] = amount.div(digits).into();
         let mut amount: Vec<u8> = amount.into();
 
-        fn proc_buffer(v: &mut Vec<u8>) -> Vec<u8> {
+        fn uint_32(v: &mut Vec<u8>) -> Vec<u8> {
             let mut r = vec![0u8;32-v.len()];
             r.append(v);
             r
         }
 
+        fn address(v: &mut Vec<u8>) -> Vec<u8> {
+            let mut r = vec![0u8;20-v.len()];
+            r.append(v);
+            r
+        }
+
         let mut aggregated_data = Vec::new();
-        aggregated_data.append(proc_buffer(contract_addr.as_mut()).as_mut());
-        aggregated_data.append(proc_buffer(sender.as_mut()).as_mut());
+        aggregated_data.append(address(contract_addr.as_mut()).as_mut());
+        aggregated_data.append(address(sender.as_mut()).as_mut());
         aggregated_data.append(&mut amount);
-        aggregated_data.append(proc_buffer(id.as_mut()).as_mut());
-        aggregated_data.append(proc_buffer(meta.as_mut()).as_mut());
+        aggregated_data.append(uint_32(id.as_mut()).as_mut());
+        aggregated_data.append(uint_32(meta.as_mut()).as_mut());
 
         base64::encode(&aggregated_data[..])
 
