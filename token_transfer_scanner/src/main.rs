@@ -99,7 +99,7 @@ impl EventScannerAdapter<Data> for EthScan {
         println!("row {} | amount       : {}",thread_num,amount);
 
         fn proc_buffer(v: &mut Vec<u8>) -> Vec<u8> {
-            let mut r = vec![0u8;256-v.len()];
+            let mut r = vec![0u8;32-v.len()];
             r.append(v);
             r
         }

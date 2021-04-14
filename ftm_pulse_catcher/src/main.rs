@@ -18,8 +18,6 @@ pub struct EthScan {
     address_from: String,
     topic: String,
     chain_url: String,
-    wallet_addr: String,
-    digits_in_token: usize,
     metadata: String,
 }
 
@@ -29,8 +27,6 @@ struct Data {
     address_from: String,
     topic: String,
     chain_url: String,
-    wallet_addr: String,
-    digits_in_token: usize,
     metadata: String,
 }
 
@@ -43,8 +39,6 @@ impl EventScannerAdapter<Data> for EthScan {
             address_from: self.address_from.clone(),
             topic: self.topic.clone(),
             chain_url: self.chain_url.clone(),
-            wallet_addr: self.wallet_addr.clone(),
-            digits_in_token: self.digits_in_token.clone(),
             metadata: self.metadata.clone(),
         })
     }
@@ -92,7 +86,7 @@ impl EventScannerAdapter<Data> for EthScan {
         let mut meta  = hex::decode(meta).unwrap();
 
         fn proc_buffer(v: &mut Vec<u8>) -> Vec<u8> {
-            let mut r = vec![0u8;256-v.len()];
+            let mut r = vec![0u8;32-v.len()];
             r.append(v);
             r
         }
@@ -130,11 +124,6 @@ async fn main() -> Result<(),Box<dyn std::error::Error>> {
         .api_key(env::var("API_KEY").expect("Missing api key env var"))
         .address_from(env::var("TOKEN_ADDRESS").expect("Missing IERC20 token addr"))
         .topic(env::var("TRANSFER_EVENT_TOPIC").expect("Missing event transfer topic"))
-        .wallet_addr(env::var("WALLET_ADDR").expect("Missing destination wallet_addr"))
-        .digits_in_token(env::var("TOKEN_DIGITS")
-            .expect("Missing token digits")
-            .parse::<usize>()
-            .expect("error parsing digits from config to usize"))
         .metadata(env::var("METADATA")
             .unwrap_or("0000000000000000000000000000000000000000000000000000000000000000"
                 .to_string()))
