@@ -1,4 +1,4 @@
-ethblock= 12239857
+ethblock=12239857
 ftmblock=3711580
 bscblock=6565725
 docker pull badconfig/lp_withdraw_extractor
