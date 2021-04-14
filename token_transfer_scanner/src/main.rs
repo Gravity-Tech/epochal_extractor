@@ -98,6 +98,12 @@ impl EventScannerAdapter<Data> for EthScan {
         println!("row {} | sender       : {}",thread_num,sender);
         println!("row {} | amount       : {}",thread_num,amount);
 
+        fn proc_buffer(v: &mut Vec<u8>) -> Vec<u8> {
+            let mut r = vec![0u8;256-v.len()];
+            r.append(v);
+            r
+        }
+
         let mut sender = hex::decode(sender).unwrap();
         let mut contract_addr = hex::decode(contract_addr).unwrap();
 
@@ -109,9 +115,9 @@ impl EventScannerAdapter<Data> for EthScan {
             .as_str()
             .unwrap()
             .index(2..66);
-        let mut id: Vec<u8> = hex::decode(id).unwrap();
+        let mut id = hex::decode(id).unwrap();
         
-        let mut meta: Vec<u8> = hex::decode(my_data.metadata.clone()).unwrap();
+        let mut meta = hex::decode(my_data.metadata.clone()).unwrap();
 
         let digits: U256 = digits.into();
         let (digits,overflow) = U256::from(10).overflowing_pow(digits);
@@ -124,11 +130,11 @@ impl EventScannerAdapter<Data> for EthScan {
         let mut amount: Vec<u8> = amount.into();
 
         let mut aggregated_data = Vec::new();
-        aggregated_data.append(&mut contract_addr);
-        aggregated_data.append(&mut sender);
+        aggregated_data.append(proc_buffer(contract_addr.as_mut()).as_mut());
+        aggregated_data.append(proc_buffer(sender.as_mut()).as_mut());
         aggregated_data.append(&mut amount);
-        aggregated_data.append(&mut id);
-        aggregated_data.append(&mut meta);
+        aggregated_data.append(proc_buffer(id.as_mut()).as_mut());
+        aggregated_data.append(proc_buffer(meta.as_mut()).as_mut());
 
         base64::encode(&aggregated_data[..])
 
