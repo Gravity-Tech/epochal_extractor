@@ -13,7 +13,7 @@ services:
       - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
       - METADATA=0000000000000000000000000000000000000000000000000000000000000002
       - POLLER_ID=20
-      - TOKEN_DIGITS=18
+      - TOKEN_DIGITS=0
     networks:
         - app-network
   gton_extractor_withdraw_wdpi_bnb:
@@ -29,7 +29,7 @@ services:
       - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
       - METADATA=0000000000000000000000000000000000000000000000000000000000000002
       - POLLER_ID=19
-      - TOKEN_DIGITS=18
+      - TOKEN_DIGITS=0
     networks:
         - app-network
   gton_extractor_deposit_wusdn_bnb:
@@ -45,7 +45,7 @@ services:
       - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
       - METADATA=0000000000000000000000000000000000000000000000000000000000000001
       - POLLER_ID=18
-      - TOKEN_DIGITS=18
+      - TOKEN_DIGITS=0
     networks:
         - app-network
   gton_extractor_deposit_wdpi_bnb:
@@ -61,7 +61,7 @@ services:
       - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
       - METADATA=0000000000000000000000000000000000000000000000000000000000000001
       - POLLER_ID=17
-      - TOKEN_DIGITS=18
+      - TOKEN_DIGITS=0
     networks:
         - app-network
   lp_wusdn_bnb_subs_extractor:
