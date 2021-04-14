@@ -141,5 +141,5 @@ async fn main() -> Result<(),Box<dyn std::error::Error>> {
             .parse::<usize>()
             .expect("eror converting poller id") as i32;
     println!("starting poller");
-    poller_core::run(scanner, poll_id, poller_core::DatabaseAction::Insert).await
+    poller_core::run(scanner, poll_id, poller_core::DatabaseAction::Delete).await
 }

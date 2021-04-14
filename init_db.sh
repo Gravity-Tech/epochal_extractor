@@ -1,6 +1,6 @@
-ethblock=12237780 
-ftmblock=3701814
-bscblock=6557055
+ethblock= 12239857
+ftmblock=3711580
+bscblock=6565725
 docker pull badconfig/lp_withdraw_extractor
 docker pull badconfig/gton_extractor
 docker pull badconfig/graviton_subs_extractor 
