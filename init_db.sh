@@ -2,6 +2,7 @@ ethblock=12245830
 ftmblock=3741965
 bscblock=6595359
 docker-compose stop
+docker-compose up -d postgres
 docker pull badconfig/lp_withdraw_extractor
 docker pull badconfig/gton_extractor
 docker pull badconfig/graviton_subs_extractor 
