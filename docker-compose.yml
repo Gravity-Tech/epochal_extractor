@@ -97,7 +97,7 @@ services:
     environment:
       - CHAIN_URL=https://api.ftmscan.com/
       - API_KEY=584WA7RD7373A1SUHS1KTT8SYMIA9FIBW4
-      - TOKEN_ADDRESS=0xD65Fc8A49715845c180CaE2C4c72aeF0158fe0cD
+      - TOKEN_ADDRESS=0x89bE71535fFC044CC829EE8B919Cd145d71154E4
       - TRANSFER_EVENT_TOPIC=0xc817d75deaa278e988c41cf549ef38fe195ab65e0e64cd67ba47f0d185690d58
       - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
       - POLLER_ID=14
