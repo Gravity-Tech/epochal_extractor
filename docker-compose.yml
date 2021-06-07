@@ -1,18 +1,11 @@
 version: '3'
 services:
-  gton_extractor_usdn:
-    image: badconfig/gton_extractor
-    container_name: gton_extractor_usdn
+  cola_extractor:
+    image: badconfig/cola_extractor
+    container_name: cola_extractor
     tty: true
-    environment:
-      - CHAIN_URL=https://api.etherscan.io/
-      - API_KEY=XAYGCRGDREUH9YX91XGTFYB9Q2RX47I26D
-      - TOKEN_ADDRESS=0x674C6Ad92Fd080e4004b2312b45f796a192D27a0
-      - TRANSFER_EVENT_TOPIC=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
-      - WALLET_ADDR=0x000000000000000000000000953555e0Af401Bd031a5a53c72EFa81fae464276
-      - DATABASE_URL=postgres://docker:sdfjksfu2jkl45g343b@postgres:5432/diesel_db
-      - POLLER_ID=12
-      - TOKEN_DIGITS=18
+    volumes:
+      - ./extractor_v2_cola/cola.yaml:/cola_extractor/cola.yaml
     networks:
         - app-network
   postgres:

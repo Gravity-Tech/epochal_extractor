@@ -1,5 +1,5 @@
 [package]
-name = "keeper_extractor"
+name = "cola_extractor"
 version = "0.1.0"
 authors = ["GooGrand <55867268+GooGrand@users.noreply.github.com>"]
 edition = "2018"
@@ -9,7 +9,7 @@ name = "cola"
 path = "src/lib.rs"
 
 [[bin]]
-name = "extractor_evm"
+name = "cola_extractor"
 path = "src/evm_extractor/bin.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

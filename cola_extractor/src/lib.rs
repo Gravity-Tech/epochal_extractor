@@ -40,6 +40,7 @@ use crate::config::ChainType;
 
 pub fn processor_default(mut log: Log) -> Vec<u8> {
     let mut acc = Vec::new();
+    acc.extend_from_slice(&[log.topics.len() as u8]);
     for t in log.topics {
         acc.extend_from_slice(t.as_bytes())
     }
@@ -88,7 +89,7 @@ pub async fn cola_kernel(
                 let data:Vec<Uuid> = tokio_stream::iter(result)
                     .map(|log| {
                         let s = log.data.0.as_slice();
-                        Uuid::from_slice(s).unwrap()
+                        Uuid::from_slice(&s[32..32+16]).unwrap()
                     })
                     .collect()
                     .await;

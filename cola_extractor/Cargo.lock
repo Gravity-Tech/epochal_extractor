@@ -138,6 +138,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "cola_extractor"
+version = "0.1.0"
+dependencies = [
+ "base64 0.13.0",
+ "chrono",
+ "database",
+ "dotenv",
+ "hex",
+ "serde",
+ "serde_yaml",
+ "tokio 0.2.25",
+ "tokio-stream",
+ "uuid 0.8.2",
+ "web3",
+]
+
+[[package]]
 name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -703,23 +720,6 @@ name = "keccak"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67c21572b4949434e4fc1e1978b99c5f77064153c59d998bf13ecd96fb5ecba7"
-
-[[package]]
-name = "keeper_extractor"
-version = "0.1.0"
-dependencies = [
- "base64 0.13.0",
- "chrono",
- "database",
- "dotenv",
- "hex",
- "serde",
- "serde_yaml",
- "tokio 0.2.25",
- "tokio-stream",
- "uuid 0.8.2",
- "web3",
-]
 
 [[package]]
 name = "kernel32-sys"
