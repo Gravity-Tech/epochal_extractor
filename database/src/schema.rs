@@ -1,6 +1,6 @@
 table! {
     extracted_data (id) {
-        id -> Int4,
+        id -> Uuid,
         base64bytes -> Varchar,
     }
 }
@@ -8,7 +8,7 @@ table! {
 table! {
     poller_states (id) {
         id -> Int4,
-        num -> Int4,
+        num -> Int8,
     }
 }
 

@@ -2,40 +2,50 @@
 extern crate diesel;
 use diesel::prelude::*;
 pub mod schema;
-use diesel::pg::PgConnection;
-use dotenv::dotenv;
-use std::env;
 use crate::schema::extracted_data;
 use crate::schema::poller_states;
 use diesel::result::Error;
+use uuid::Uuid;
+use diesel::PgConnection;
+use diesel::r2d2::ConnectionManager;
+use r2d2;
+pub type ConnPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
-
-pub fn establish_connection() -> PgConnection {
-    dotenv().ok();
-
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url))
+pub fn establish_connection(database_url: &str) -> ConnPool {
+    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.")
 }
 
-#[derive(Insertable,AsChangeset,Debug,Clone)]
+#[derive(Queryable,Insertable,Debug,Clone)]
 #[table_name="extracted_data"]
 struct InsertableData {
+    id: Uuid,
     base64bytes: String,
 }
 
 /// this function uses increment num and pushing data together in one transaction
 /// in case any of it fails, we will rollback, so data would be safe and enough stressful
-pub fn push(data: Vec<String>, conn: &PgConnection) -> Result<(),Error> {
+pub fn push(
+    num: i64,
+    poller_id: i32,
+    data: Vec<(Uuid,String)>, 
+    conn: &PgConnection
+) -> Result<(),Error> {
     conn.build_transaction()
         .read_write()
         .run::<(), diesel::result::Error, _>(|| {
-            diesel::insert_into(extracted_data::table)
-                .values(data
-                    .into_iter()
-                    .map(|x| InsertableData {base64bytes: x} )
-                    .collect::<Vec<InsertableData>>())
+            for d in data {
+                diesel::insert_into(extracted_data::table)
+                    .values(InsertableData{
+                        id: d.0,
+                        base64bytes: d.1,
+                    })
+                    .execute(conn)?;
+            }
+            diesel::update(poller_states::table.filter(poller_states::id.eq(poller_id)))
+                .set(poller_states::num.eq(num))
                 .execute(conn)?;
             Ok(())
         })?;
@@ -43,30 +53,36 @@ pub fn push(data: Vec<String>, conn: &PgConnection) -> Result<(),Error> {
 }
 
 pub fn fetch(conn: &PgConnection) -> Result<String,Error> {
-    let (id,data) = extracted_data::table
+    let (_,data) = extracted_data::table
         .order_by(extracted_data::id.asc())
-        .get_result::<(i32,String)>(conn)?;
+        .get_result::<(Uuid,String)>(conn)?;
     Ok(data)
 }
 
-pub fn delete(rows: Vec<String>, conn: &PgConnection) -> Result<(),Error> {
-    for row in rows {
-        diesel::delete(extracted_data::table.filter(extracted_data::base64bytes.eq(row)))
-            .execute(conn)?;
-    }
+pub fn delete(
+    num: i64,
+    poller_id: i32,
+    ids: Vec<Uuid>, 
+    conn: &PgConnection
+) -> Result<(),Error> {
+    conn.build_transaction()
+        .read_write()
+        .run::<(), diesel::result::Error, _>(|| {
+            for id in ids {
+                diesel::delete(extracted_data::table.filter(extracted_data::id.eq(id)))
+                .execute(conn)?;
+            }
+            diesel::update(poller_states::table.filter(poller_states::id.eq(poller_id)))
+                .set(poller_states::num.eq(num))
+                .execute(conn)?;
+            Ok(())
+        })?;
     Ok(())
 }
-
-pub fn increment_num(poller_id: i32,conn: &PgConnection) -> Result<usize,Error> {
-    diesel::update(poller_states::table.filter(poller_states::id.eq(poller_id)))
-        .set(poller_states::num.eq(poller_states::num + 1))
-        .execute(conn)
-}
-
-pub fn load_num(poller_id: i32,conn: &PgConnection) -> Result<i32,Error> {
+pub fn load_num(poller_id: i32,conn: &PgConnection) -> Result<i64,Error> {
     poller_states::table
         .filter(poller_states::id.eq(poller_id))
         .select(poller_states::num)
-        .get_result::<i32>(conn)
+        .get_result::<i64>(conn)
 }
 
