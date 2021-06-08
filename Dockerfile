@@ -1,10 +1,8 @@
 FROM rustlang/rust:nightly as builder
 
-ARG name
-
 COPY . .
 #RUN USER=root cargo new --bin $name
-WORKDIR /${name}
+WORKDIR /cola_extractor
 
 # copy over your manifests
 #COPY ./Cargo.toml ./Cargo.toml
@@ -20,7 +18,6 @@ RUN cargo build --release
 #RUN cargo build --release
 
 FROM debian:buster-slim
-ARG name
 
 RUN apt-get update && \
     apt-get --assume-yes install \
@@ -31,8 +28,8 @@ RUN apt-get update && \
         --no-install-recommends
 RUN apt-get update && apt-get -y install ca-certificates libssl-dev && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /${name}/target/release/${name} /${name}/${name}
-WORKDIR /${name}/
+COPY --from=builder /cola_extractor/target/release/cola_extractor /cola_extractor/cola_extractor
+WORKDIR /cola_extractor/
 
 
-CMD ["/${name}/${name}"]
+CMD ["/cola_extractor/cola_extractor"]

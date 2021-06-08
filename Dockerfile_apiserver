@@ -1,7 +1,7 @@
 FROM rust:1.50 as builder
 
-WORKDIR /extractor
 COPY . .
+WORKDIR /api_server
 RUN cargo clean
 RUN cargo build --release
 
@@ -16,7 +16,7 @@ RUN apt-get update && \
         --no-install-recommends
 RUN apt-get update && apt-get -y install ca-certificates libssl-dev && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /extractor/target/release/api_server /api_server/api_server
+COPY --from=builder /api_server/target/release/api_server /api_server/api_server
 WORKDIR /api_server
 EXPOSE 8088
 
