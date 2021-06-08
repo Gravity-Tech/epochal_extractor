@@ -13,7 +13,7 @@ services:
     container_name: cola_extractor
     tty: true
     volumes:
-      - ./extractor_v2_cola/cola.yaml:/cola_extractor/cola.yaml
+      - ./cola_extractor/cola.yaml:/cola_extractor/cola.yaml
     networks:
         - app-network
   postgres:
