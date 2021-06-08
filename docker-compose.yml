@@ -5,7 +5,7 @@ services:
     container_name: extractor_api
     tty: true
     volumes:
-      - ./api_server/.env:/api_server/.env
+      - ./api_server/.env:/api_server/
     networks:
         - app-network
   cola_extractor:
