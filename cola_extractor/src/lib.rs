@@ -38,19 +38,19 @@ use std::sync::RwLock;
 
 use crate::config::ChainType;
 
-pub fn processor_default(mut log: Log) -> Vec<u8> {
+pub fn processor_default(mut log: Log) -> (Vec<u8>,u64) {
     let mut acc = Vec::new();
     acc.extend_from_slice(&[log.topics.len() as u8]);
     for t in log.topics {
         acc.extend_from_slice(t.as_bytes())
     }
     acc.append(log.data.0.as_mut());
-    acc
+    (acc,log.block_number.unwrap().as_u64())
 }
 
 pub async fn cola_kernel(
     config: Arc<ColaConfig>,
-    processor: &'static (dyn Fn(Log)->Vec<u8> + Sync),
+    processor: &'static (dyn Fn(Log)->(Vec<u8>,u64) + Sync),
 ) -> ! { 
     loop {
         let num = database::load_num(
@@ -65,7 +65,7 @@ pub async fn cola_kernel(
                     .block_number()
                     .await
                     .unwrap();
-        let current_block = BlockNumber::Number(current_block_num);
+        let current_block = BlockNumber::Number(current_block_num-10);
         let mut topics = TopicFilter::default();
         topics.topic0 = match  config.chain_name {
             ChainType::FTM => Topic::default(),
@@ -102,9 +102,10 @@ pub async fn cola_kernel(
                 .unwrap();
             }
             _ => {
-                let data:Vec<(Uuid,String)> = tokio_stream::iter(result)
+                let data:Vec<(Uuid,String,i64,i32)> = tokio_stream::iter(result)
                     .map(|log| processor(log))
                     .map(|mut bytes| {
+                        let (mut bytes,block) = bytes;
                         let mut b = Vec::new();
                         let id = Uuid::new_v4();
                         let chain = format!("{:?}",config.chain_name);
@@ -112,7 +113,7 @@ pub async fn cola_kernel(
                         b.extend_from_slice(chain.as_bytes());
                         b.extend_from_slice(config.emitter_address.as_bytes());
                         b.append(bytes.as_mut());
-                        (id,base64::encode(b))
+                        (id,base64::encode(b),block as i64,config.priority)
                     })
                     .collect()
                     .await;
@@ -126,6 +127,6 @@ pub async fn cola_kernel(
                 .unwrap();
             }
         }
-        delay_for(Duration::from_secs((60) as u64)).await;
+        delay_for(Duration::from_secs((30) as u64)).await;
     }
 }

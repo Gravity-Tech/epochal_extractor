@@ -1,8 +1,12 @@
-CREATE TABLE pollers_data (
-  id SERIAL PRIMARY KEY,
-  block_id BIGINT NOT NULL,
-  poller_id INT NOT NULL
+CREATE TABLE poller_states (
+    id SERIAL PRIMARY KEY,
+    num BIGINT NOT NULL DEFAULT 0
 );
 
-INSERT INTO pollers_data (block_id, poller_id)
-VALUES (7906478, 1);
+CREATE TABLE extracted_data(
+    id UUID PRIMARY KEY,
+    base64Bytes VARCHAR NOT NULL,
+    block_id BIGINT NOT NULL, 
+    priority INT NOT NULL
+);
+

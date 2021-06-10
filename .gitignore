@@ -1,2 +1,3 @@
 *target/
 *cola.yaml
+./api_server/.env

@@ -23,6 +23,8 @@ pub fn establish_connection(database_url: &str) -> ConnPool {
 struct InsertableData {
     id: Uuid,
     base64bytes: String,
+    block_id: i64,
+    priority: i32,
 }
 
 /// this function uses increment num and pushing data together in one transaction
@@ -30,7 +32,7 @@ struct InsertableData {
 pub fn push(
     num: i64,
     poller_id: i32,
-    data: Vec<(Uuid,String)>, 
+    data: Vec<(Uuid,String,i64,i32)>, 
     conn: &PgConnection
 ) -> Result<(),Error> {
     conn.build_transaction()
@@ -41,6 +43,8 @@ pub fn push(
                     .values(InsertableData{
                         id: d.0,
                         base64bytes: d.1,
+                        block_id: d.2,
+                        priority: d.3,
                     })
                     .execute(conn)?;
             }
@@ -53,9 +57,13 @@ pub fn push(
 }
 
 pub fn fetch(conn: &PgConnection) -> Result<String,Error> {
-    let (_,data) = extracted_data::table
-        .order_by(extracted_data::id.asc())
-        .get_result::<(Uuid,String)>(conn)?;
+    let data = extracted_data::table
+        .order_by(&(
+                extracted_data::block_id.asc(),
+                extracted_data::priority.desc(),
+        ))
+        .select(extracted_data::base64bytes)
+        .get_result::<String>(conn)?;
     Ok(data)
 }
 

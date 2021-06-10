@@ -28,6 +28,7 @@ pub struct ColaConfig {
     pub connection: database::ConnPool,
     pub bubble_id: i32,
     pub bubble_name: String,
+    pub priority: i32,
 }
 
 pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
@@ -72,7 +73,11 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
             };
             let id = match cfg["id"].as_i64() {
                 Some(s) => s as i32,
-                None => panic!("can't find database_url in {}",name),
+                None => panic!("can't find bubble id in {}",name),
+            };
+            let priority = match cfg["priority"].as_i64() {
+                Some(s) => s as i32,
+                None => 0,
             };
             ColaConfig {
                 bubble_id: id,
@@ -82,6 +87,7 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                 web3_instance: web3_instance,
                 emitter_address: emitter_address,
                 connection: connection,
+                priority: priority,
             } 
         }).collect().await
 }

@@ -2,6 +2,8 @@ table! {
     extracted_data (id) {
         id -> Uuid,
         base64bytes -> Varchar,
+        block_id -> Int8,
+        priority -> Int4,
     }
 }
 

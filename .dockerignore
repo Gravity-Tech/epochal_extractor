@@ -1,4 +1,7 @@
-*target
+./api_server/target
+./cola_extractor/target
+./database/target
+./target
 ./docker-compose.yml
 *Dockerfile*
 
