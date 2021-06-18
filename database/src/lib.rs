@@ -23,7 +23,7 @@ pub fn establish_connection(database_url: &str) -> ConnPool {
 struct InsertableData {
     id: Uuid,
     base64bytes: String,
-    block_id: i64,
+    block_id: chrono::NaiveDateTime,
     priority: i32,
 }
 
@@ -38,12 +38,13 @@ pub fn push(
     conn.build_transaction()
         .read_write()
         .run::<(), diesel::result::Error, _>(|| {
+            let ct = chrono::Utc::now().naive_utc();
             for d in data {
                 diesel::insert_into(extracted_data::table)
                     .values(InsertableData{
                         id: d.0,
                         base64bytes: d.1,
-                        block_id: d.2,
+                        block_id: ct,
                         priority: d.3,
                     })
                     .execute(conn)?;

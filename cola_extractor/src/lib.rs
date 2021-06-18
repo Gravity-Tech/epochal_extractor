@@ -65,7 +65,8 @@ pub async fn cola_kernel(
                     .block_number()
                     .await
                     .unwrap();
-        let current_block = BlockNumber::Number(current_block_num-10);
+        let current_block_num = current_block_num - 10;
+        let current_block = BlockNumber::Number(current_block_num);
         let mut topics = TopicFilter::default();
         topics.topic0 = match  config.chain_name {
             ChainType::FTM => Topic::default(),
