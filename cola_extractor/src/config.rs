@@ -11,6 +11,11 @@ use web3::ethabi::{
     Topic,
 };
 
+use diesel::prelude::*;
+use diesel::r2d2::{self, ConnectionManager};
+type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+use std::sync::Arc;
+
 #[derive(Debug,Clone)]
 pub enum ChainType {
     ETH,
@@ -22,17 +27,25 @@ pub enum ChainType {
 #[derive(Clone)]
 pub struct ColaConfig {
     pub chain_name: ChainType,
-    pub event_topic: H256,
+    pub event_topic: Vec<H256>,
     pub web3_instance: web3::Web3<Http>,
     pub emitter_address: Address,
-    pub connection: database::ConnPool,
+    pub connection: Arc<DbPool>,
     pub bubble_id: i32,
     pub bubble_name: String,
     pub priority: i32,
+    pub max_block_range: U64,
+    pub port: i32,
 }
 
 pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
     let data = std::fs::read_to_string(filename).expect("failed to read cola.yaml");
+    let connspec = std::env::var("DATABASE_URL").expect("DATABASE_URL");
+    let manager = ConnectionManager::<PgConnection>::new(connspec);
+    let pool = r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool.");
+    let pool = Arc::new(pool);
     let v: Mapping = serde_yaml::from_str(&data).expect("error parsing yaml file");
     tokio_stream::iter(v)
         .map(|v|{
@@ -49,10 +62,17 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                     }
                 None => panic!("can't find chain name in {}",name),
             };
-            let event_topic = match cfg["event_topic"].as_str() {
+            let event_topic: Vec<H256> = match cfg["event_topic"].as_sequence() {
                 Some(s) => s
-                        .parse::<H256>()
-                        .expect("err parsting event topic"),
+                        .into_iter()
+                        .map(|v| {
+                            v
+                                .as_str()
+                                .unwrap()
+                                .parse::<H256>()
+                                .unwrap()
+                        })
+                        .collect(),
                 None => panic!("can't find topic in {}",name),
             };
             let web3_instance = match cfg["rpc_url"].as_str() {
@@ -67,15 +87,19 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                 Some(s) => s.parse::<Address>().expect("error parsing emmiter address"),
                 None => panic!("can't find emitter_address in {}",name),
             };
-            let connection = match cfg["database_url"].as_str() {
-                Some(s) => database::establish_connection(s),
-                None => panic!("can't find database_url in {}",name),
-            };
             let id = match cfg["id"].as_i64() {
                 Some(s) => s as i32,
                 None => panic!("can't find bubble id in {}",name),
             };
+            let max_block_range = match cfg["max_block_range"].as_u64() {
+                Some(s) => s.into(),
+                None => panic!("can't find bubble id in {}",name),
+            };
             let priority = match cfg["priority"].as_i64() {
+                Some(s) => s as i32,
+                None => 0,
+            };
+            let port = match cfg["port"].as_i64() {
                 Some(s) => s as i32,
                 None => 0,
             };
@@ -86,8 +110,10 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                 event_topic: event_topic,
                 web3_instance: web3_instance,
                 emitter_address: emitter_address,
-                connection: connection,
+                connection: pool.clone(),
                 priority: priority,
+                max_block_range: max_block_range,
+                port: port,
             } 
         }).collect().await
 }

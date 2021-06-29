@@ -25,6 +25,7 @@ struct InsertableData {
     base64bytes: String,
     block_id: chrono::NaiveDateTime,
     priority: i32,
+    port: i32,
 }
 
 /// this function uses increment num and pushing data together in one transaction
@@ -33,6 +34,7 @@ pub fn push(
     num: i64,
     poller_id: i32,
     data: Vec<(Uuid,String,i64,i32)>, 
+    port: i32,
     conn: &PgConnection
 ) -> Result<(),Error> {
     conn.build_transaction()
@@ -46,6 +48,7 @@ pub fn push(
                         base64bytes: d.1,
                         block_id: ct,
                         priority: d.3,
+                        port: port,
                     })
                     .execute(conn)?;
             }

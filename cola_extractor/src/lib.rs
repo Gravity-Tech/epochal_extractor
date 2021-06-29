@@ -48,6 +48,33 @@ pub fn processor_default(mut log: Log) -> (Vec<u8>,u64) {
     (acc,log.block_number.unwrap().as_u64())
 }
 
+pub async fn proc_topic(
+    prev_block: BlockNumber,
+    current_block: BlockNumber,
+    current_topic: usize,
+    config: Arc<ColaConfig>,
+    processor: &'static (dyn Fn(Log)->(Vec<u8>,u64) + Sync),
+) -> Vec<Log> {
+        let mut topics = TopicFilter::default();
+        topics.topic0 = match  config.chain_name {
+            ChainType::FTM => Topic::default(),
+            _ => Topic::from(config.event_topic[current_topic]),
+        };
+        let filter = FilterBuilder::default()
+                    .from_block(prev_block) 
+                    .to_block(current_block)
+                    .address(vec![config.emitter_address])
+                    .topic_filter(topics)
+                    .build();
+        config
+                    .web3_instance
+                    .eth()
+                    .logs(filter)
+                    .await
+                    .unwrap()
+
+}
+
 pub async fn cola_kernel(
     config: Arc<ColaConfig>,
     processor: &'static (dyn Fn(Log)->(Vec<u8>,u64) + Sync),
@@ -66,25 +93,25 @@ pub async fn cola_kernel(
                     .await
                     .unwrap();
         let current_block_num = current_block_num - 10;
+        let current_block_num = current_block_num
+            .min(config.max_block_range);
         let current_block = BlockNumber::Number(current_block_num);
-        let mut topics = TopicFilter::default();
-        topics.topic0 = match  config.chain_name {
-            ChainType::FTM => Topic::default(),
-            _ => Topic::from(config.event_topic),
-        };
-        let filter = FilterBuilder::default()
-                    .from_block(prev_block) 
-                    .to_block(current_block)
-                    .address(vec![config.emitter_address])
-                    .topic_filter(topics)
-                    .build();
-        let result: Vec<web3::types::Log> = config
-                    .web3_instance
-                    .eth()
-                    .logs(filter)
-                    .await
-                    .unwrap();
-        println!("{} starting from block {} to block {} ...",config.bubble_name,num,current_block_num);
+
+
+        let mut result: Vec<Log> = Vec::new();
+        let len = config
+                    .event_topic
+                    .len();
+        for ind in 0..len {
+                let mut r = proc_topic(
+                    prev_block, 
+                    current_block,
+                    ind,
+                    config.clone(), 
+                    processor,
+                ).await;
+                result.append(&mut r);
+        }
         match config.chain_name {
             ChainType::FTM => {
                 let data:Vec<Uuid> = tokio_stream::iter(result)
@@ -123,6 +150,7 @@ pub async fn cola_kernel(
                     (current_block_num.as_u64()+1) as i64, 
                     config.bubble_id, 
                     data,
+                    config.port,
                    &config.connection.get().unwrap(),
                 )
                 .unwrap();

@@ -4,6 +4,7 @@ table! {
         base64bytes -> Varchar,
         block_id -> Timestamp,
         priority -> Int4,
+        port -> Int4,
     }
 }
 
