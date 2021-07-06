@@ -18,11 +18,12 @@ struct Data {
 #[get("/extract")]
 async fn extract(
     pool: web::Data<DbPool>,
+    port: web::Data<(i32,)>,
 ) -> Result<HttpResponse, Error> {
     let conn = pool.get().expect("couldn't get db connection from pool");
 
     // use web::block to offload blocking Diesel code without blocking server thread
-    let portion = web::block(move || database::fetch(&conn))
+    let portion = web::block(move || database::fetch(port.0, &conn))
         .await
         .map_err(|e| {
             eprintln!("{}", e);
@@ -66,21 +67,22 @@ async fn main() -> std::io::Result<()> {
 
     // set up database connection pool
     let connspec = std::env::var("DATABASE_URL").expect("DATABASE_URL");
+    let port: i32 = std::env::var("SERVER_BIND_PORT")
+        .expect("SERVER_BIND_PORT")
+        .parse()
+        .unwrap();
     let manager = ConnectionManager::<PgConnection>::new(connspec);
     let pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");
-
-    let bind = "0.0.0.0:8088";
-
-
-
+    let bind = "0.0.0.0:".to_owned() + &port.to_string();
     println!("Starting server at: {}", &bind);
 
     HttpServer::new(move || {
         App::new()
             // set up DB pool to be used with web::Data<Pool> extractor
             .data(pool.clone())
+            .data((port.clone(),))
             .wrap(middleware::Logger::default())
             .service(extract)
             .service(info)

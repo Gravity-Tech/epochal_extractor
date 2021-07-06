@@ -33,8 +33,7 @@ struct InsertableData {
 pub fn push(
     num: i64,
     poller_id: i32,
-    data: Vec<(Uuid,String,i64,i32)>, 
-    port: i32,
+    data: Vec<(Uuid,String,i64,i32,i32)>, 
     conn: &PgConnection
 ) -> Result<(),Error> {
     conn.build_transaction()
@@ -48,7 +47,7 @@ pub fn push(
                         base64bytes: d.1,
                         block_id: ct,
                         priority: d.3,
-                        port: port,
+                        port: d.4,
                     })
                     .execute(conn)?;
             }
@@ -60,12 +59,13 @@ pub fn push(
     Ok(())
 }
 
-pub fn fetch(conn: &PgConnection) -> Result<String,Error> {
+pub fn fetch(port: i32, conn: &PgConnection) -> Result<String,Error> {
     let data = extracted_data::table
         .order_by(&(
                 extracted_data::block_id.asc(),
                 extracted_data::priority.desc(),
         ))
+        .filter(extracted_data::port.eq(port))
         .select(extracted_data::base64bytes)
         .get_result::<String>(conn)?;
     Ok(data)

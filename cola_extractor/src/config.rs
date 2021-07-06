@@ -24,18 +24,30 @@ pub enum ChainType {
     PLG,
 }
 
+#[derive(Debug,Clone)]
+pub enum DBAction {
+    Insert,
+    Delete,
+}
+
+#[derive(Clone)]
+pub struct EventConfig {
+    pub event_topic: H256,
+    pub priority: i32,
+    pub port: i32,
+    pub db_action: DBAction,
+}
+
 #[derive(Clone)]
 pub struct ColaConfig {
     pub chain_name: ChainType,
-    pub event_topic: Vec<H256>,
+    pub events_data: Vec<EventConfig>,
     pub web3_instance: web3::Web3<Http>,
     pub emitter_address: Address,
     pub connection: Arc<DbPool>,
     pub bubble_id: i32,
     pub bubble_name: String,
-    pub priority: i32,
     pub max_block_range: U64,
-    pub port: i32,
 }
 
 pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
@@ -62,27 +74,42 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                     }
                 None => panic!("can't find chain name in {}",name),
             };
-            let event_topic: Vec<H256> = match cfg["event_topic"].as_sequence() {
-                Some(s) => s
-                        .into_iter()
-                        .map(|v| {
-                            v
-                                .as_str()
-                                .unwrap()
-                                .parse::<H256>()
-                                .unwrap()
-                        })
-                        .collect(),
+            let events_data = match cfg["events_data"].as_sequence() {
+                Some(s) => s.into_iter()
+                    .map(|v|{
+                        EventConfig {
+                            event_topic: v["event_topic"]
+                                                .as_str()
+                                                .expect(&format!(
+                                                        "missing event topic in {}",
+                                                        name
+                                                ))
+                                                .parse()
+                                                .expect("error persing event topic"),
+                            priority: v["priority"].as_i64().unwrap_or(0) as i32,
+                            port: v["port"].as_i64().unwrap_or(8088) as i32,
+                            db_action: match v["db_action"].as_str() {
+                                Some(s) =>
+                                    match s {
+                                        "Insert" => DBAction::Insert,
+                                        "Delete" => DBAction::Delete,
+                                        _ => panic!("no valid db action in {} presented",s),
+                                    }
+                                None => DBAction::Insert,
+                            },
+                        }
+                    })
+                    .collect(),
                 None => panic!("can't find topic in {}",name),
             };
-            let web3_instance = match cfg["rpc_url"].as_str() {
-                Some(s) => {
-                    let http = web3::transports::Http::new(s)
-                        .expect("err creating http");
-                    web3::Web3::new(http)
-                }
-                None => panic!("can't find rpc_url in {}",name),
-            };
+            let web3_instance = cfg["rpc_url"]
+                    .as_str()
+                    .map(|s|{
+                        let http = web3::transports::Http::new(s)
+                            .expect("err creating http");
+                        web3::Web3::new(http)
+                    }) 
+                    .expect("can't find rpc_url");
             let emitter_address = match cfg["emitter_address"].as_str() {
                 Some(s) => s.parse::<Address>().expect("error parsing emmiter address"),
                 None => panic!("can't find emitter_address in {}",name),
@@ -95,25 +122,15 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                 Some(s) => s.into(),
                 None => panic!("can't find bubble id in {}",name),
             };
-            let priority = match cfg["priority"].as_i64() {
-                Some(s) => s as i32,
-                None => 0,
-            };
-            let port = match cfg["port"].as_i64() {
-                Some(s) => s as i32,
-                None => 0,
-            };
             ColaConfig {
                 bubble_id: id,
                 bubble_name: name.to_string(),
+                events_data: events_data,
                 chain_name: chain_name, 
-                event_topic: event_topic,
                 web3_instance: web3_instance,
                 emitter_address: emitter_address,
                 connection: pool.clone(),
-                priority: priority,
                 max_block_range: max_block_range,
-                port: port,
             } 
         }).collect().await
 }
