@@ -28,3 +28,4 @@ serde_yaml = "0.8.13"
 base64 = "0.13.0"
 diesel = { version = "1.4.4", features = ["postgres", "r2d2"] }
 r2d2 = "0.8"
+telegram-bot = "0.8.0"

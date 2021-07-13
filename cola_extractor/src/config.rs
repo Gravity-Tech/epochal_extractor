@@ -33,6 +33,7 @@ pub enum DBAction {
 #[derive(Clone)]
 pub struct EventConfig {
     pub event_topic: H256,
+    pub topics1: Option<Vec<H256>>,
     pub priority: i32,
     pub port: i32,
     pub db_action: DBAction,
@@ -48,6 +49,28 @@ pub struct ColaConfig {
     pub bubble_id: i32,
     pub bubble_name: String,
     pub max_block_range: U64,
+}
+
+use telegram_bot::*;
+pub struct Logger {
+    api: Api,
+    chat_id: ChatId,
+}
+
+impl Logger {
+    pub async fn new(api: Api, chat_id: ChatId) -> Self {
+        Logger {
+            api,
+            chat_id,
+        }
+    }
+
+    pub async fn err(
+        &self,
+        message: &str,
+    ) {
+        self.api.send(self.chat_id.text(message)).await.unwrap();
+    }
 }
 
 pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
@@ -79,13 +102,31 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                     .map(|v|{
                         EventConfig {
                             event_topic: v["event_topic"]
-                                                .as_str()
-                                                .expect(&format!(
-                                                        "missing event topic in {}",
-                                                        name
-                                                ))
-                                                .parse()
-                                                .expect("error persing event topic"),
+                                        .as_str()
+                                        .expect(&format!(
+                                                "missing event topic in {}",
+                                                name
+                                        ))
+                                        .parse()
+                                        .expect("error persing event topic"),
+                            topics1: v["topics_1"]
+                                        .as_sequence()
+                                        .map(|v|{
+                                            let v: Vec<H256> = v
+                                            .into_iter()
+                                            .map(|ev|{
+                                                let ev: H256 = ev
+                                                    .as_str()
+                                                    .expect("err getting str topic1")
+                                                    .parse()
+                                                    .expect("err parsing topic1");
+                                                ev
+                                            })
+                                            .collect();
+                                            Some(v)
+                                        })
+                                        .unwrap_or(None),
+
                             priority: v["priority"].as_i64().unwrap_or(0) as i32,
                             port: v["port"].as_i64().unwrap_or(8088) as i32,
                             db_action: match v["db_action"].as_str() {

@@ -7,6 +7,7 @@ pub mod config;
 use tokio_stream::StreamExt;
 use database;
 
+
 use web3::types::*;
 use web3::ethabi::{
     Topic,
@@ -22,10 +23,25 @@ pub enum DbAction {
 use config::{
     EventConfig,
     ColaConfig,
+    Logger,
 };
 use base64;
+use std::rc::Rc;
 use std::sync::Arc;
 
+macro_rules! unwrap_tg {
+    ($var_name:ident,$message:expr,$logger:ident) => {
+        match $var_name {
+            Ok(v) => v,
+            Err(e) => {
+                $logger.err(
+                    &(e.to_string()+" | "
+                        +&$message+" datetime: "+&chrono::Utc::now().to_string())).await;
+                panic!($message);
+            }
+        }
+    };
+}
 use crate::config::ChainType;
 
 pub fn processor_default(mut log: Log) -> (Vec<u8>,u64) {
@@ -43,6 +59,7 @@ pub async fn proc_topic(
     current_block: BlockNumber,
     current_topic: &EventConfig,
     config: Arc<ColaConfig>,
+    logger: Arc<Logger>,
 ) -> Vec<Log> {
         let mut topics = TopicFilter::default();
         topics.topic0 = Topic::from(current_topic.event_topic);
@@ -51,18 +68,35 @@ pub async fn proc_topic(
                     .to_block(current_block)
                     .address(vec![config.emitter_address])
                     .topic_filter(topics)
+                    .topics(current_topic.topics1.clone(),None,None,None)
                     .build();
-        config
+        let mut r = config
                     .web3_instance
                     .eth()
-                    .logs(filter)
-                    .await
-                    .expect(&format!("can't request logs  for {} ",config.bubble_name))
-
+                    .logs(filter.clone())
+                    .await;
+        let mut count = 0u8;
+        while let Err(_) = r {
+            if count > 10 {
+                break;
+            }
+            let f = filter.clone();
+            r = config
+                    .web3_instance
+                    .eth()
+                    .logs(f)
+                    .await;
+        }
+        let r = unwrap_tg!(r,format!("can't request logs  for {} ",
+            config.bubble_name),
+            logger);
+        r
 }
+
 
 pub async fn cola_kernel(
     config: Arc<ColaConfig>,
+    logger: Arc<Logger>,
     processor: &'static (dyn Fn(Log)->(Vec<u8>,u64) + Sync),
 ) -> ! { 
     loop {
@@ -73,17 +107,20 @@ pub async fn cola_kernel(
                 &config.connection.get()
                     .expect(&format!("error connecting to db in {}",
                         config.bubble_name))
-            )
-            .expect(&format!("no id for {} in database",config.bubble_name));
+            );
+        let num = unwrap_tg!(num,format!("no id for {} in database",config.bubble_name),
+        logger);
         let prev_block = BlockNumber::Number(num.into());
         let num: U64 = num.into();
         let current_block_num = config
                     .web3_instance
                     .eth()
                     .block_number()
-                    .await
-                    .expect(&format!("can't get current block in {}",
-                            config.bubble_name));
+                    .await;
+
+        let current_block_num = unwrap_tg!(
+            current_block_num,
+            format!("can't get current block in {}",config.bubble_name),logger);
         let current_block_num = current_block_num - 10;
         let current_block_num = current_block_num
             .min(num + config.max_block_range);
@@ -99,6 +136,7 @@ pub async fn cola_kernel(
                 current_block,
                 ev,
                 config.clone(), 
+                logger.clone(),
             ).await;
             match ev.db_action {
                 config::DBAction::Delete => {
