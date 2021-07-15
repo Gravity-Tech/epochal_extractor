@@ -63,12 +63,15 @@ pub async fn proc_topic(
 ) -> Vec<Log> {
         let mut topics = TopicFilter::default();
         topics.topic0 = Topic::from(current_topic.event_topic);
+        if current_topic.topics1.is_some() {
+            topics.topic1 = Topic::from(current_topic.topics1.clone().unwrap()[0]);
+        }
         let filter = FilterBuilder::default()
                     .from_block(prev_block) 
                     .to_block(current_block)
                     .address(vec![config.emitter_address])
                     .topic_filter(topics)
-                    .topics(current_topic.topics1.clone(),None,None,None)
+                    //.topics(current_topic.topics1.clone(),None,None,None)
                     .build();
         let mut r = config
                     .web3_instance
@@ -138,6 +141,7 @@ pub async fn cola_kernel(
                 config.clone(), 
                 logger.clone(),
             ).await;
+            println!("got data {:?}",r);
             match ev.db_action {
                 config::DBAction::Delete => {
                     let data:Vec<Uuid> = tokio_stream::iter(r)
