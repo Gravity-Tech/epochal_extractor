@@ -6,7 +6,7 @@ pub mod config;
 
 use tokio_stream::StreamExt;
 use database;
-
+//adsfdsfasdf
 
 use web3::types::*;
 use web3::ethabi::{
@@ -79,9 +79,14 @@ pub async fn proc_topic(
                     .logs(filter.clone())
                     .await;
         let mut count = 0u8;
-        while let Err(_) = r {
-            if count > 10 {
-                break;
+        let mut failure = false;
+        while let Err(e) = &r {
+            count += 1;
+            if count == 50 {
+                logger.err(&format!("failed to request for logs for {} err: {}",
+                        config.bubble_name, e)).await;
+                println!("repairing {}",config.bubble_name);
+                failure = true;
             }
             let f = filter.clone();
             r = config
@@ -89,6 +94,11 @@ pub async fn proc_topic(
                     .eth()
                     .logs(f)
                     .await;
+        }
+        if failure == true {
+            logger.err(&format!("request repaired for {}",
+                config.bubble_name)).await;
+
         }
         let r = unwrap_tg!(r,format!("can't request logs  for {} ",
             config.bubble_name),
@@ -120,13 +130,42 @@ pub async fn cola_kernel(
                     .eth()
                     .block_number()
                     .await;
+        //-----
+        let mut count = 0u8;
+        let mut failure = false;
+        while let Err(e) = &current_block_num {
+            count += 1;
+            if count == 50 {
+                logger.err(&format!("failed to request for height for {} err: {}",
+                        config.bubble_name, e)).await;
+                println!("repairing {}",config.bubble_name);
+                failure = true;
+            }
+            let current_block_num = config
+                    .web3_instance
+                    .eth()
+                    .block_number()
+                    .await;
+        }
 
+        if failure == true {
+            logger.err(&format!("request height repaired for {}",
+                config.bubble_name)).await;
+
+        }
+        //-----
         let current_block_num = unwrap_tg!(
             current_block_num,
             format!("can't get current block in {}",config.bubble_name),logger);
         let current_block_num = current_block_num - 10;
         let current_block_num = current_block_num
             .min(num + config.max_block_range);
+        if current_block_num < num {
+            logger.err(&format!("from height was bigger than to height {}",
+                config.bubble_name)).await;
+            delay_for(Duration::from_secs((30) as u64)).await;
+            continue;
+        }
         let current_block = BlockNumber::Number(current_block_num);
 
         println!("going from block {} to {} in {}",num,

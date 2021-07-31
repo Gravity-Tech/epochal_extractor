@@ -22,6 +22,9 @@ pub enum ChainType {
     FTM,
     BNB,
     PLG,
+    HEC,
+    DAI,
+    AVA,
 }
 
 #[derive(Debug,Clone)]
@@ -93,6 +96,9 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                         "FTM" => ChainType::FTM,
                         "BNB" => ChainType::BNB,
                         "PLG" => ChainType::PLG,
+                        "HEC" => ChainType::HEC,
+                        "DAI" => ChainType::DAI,
+                        "AVA" => ChainType::AVA,
                         _ => panic!("no chain name {} presented",s),
                     }
                 None => panic!("can't find chain name in {}",name),
