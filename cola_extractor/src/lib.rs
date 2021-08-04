@@ -78,11 +78,11 @@ pub async fn proc_topic(
                     .eth()
                     .logs(filter.clone())
                     .await;
-        let mut count = 0u8;
+        let mut count = 0u64;
         let mut failure = false;
         while let Err(e) = &r {
             count += 1;
-            if count == 50 {
+            if count == config.error_limit {
                 logger.err(&format!("failed to request for logs for {} err: {}",
                         config.bubble_name, e)).await;
                 println!("repairing {}",config.bubble_name);
@@ -94,6 +94,9 @@ pub async fn proc_topic(
                     .eth()
                     .logs(f)
                     .await;
+            if config.retry_delay != 0 {
+                delay_for(Duration::from_secs(config.retry_delay)).await;
+            }
         }
         if failure == true {
             logger.err(&format!("request repaired for {}",
@@ -131,11 +134,11 @@ pub async fn cola_kernel(
                     .block_number()
                     .await;
         //-----
-        let mut count = 0u8;
+        let mut count = 0u64;
         let mut failure = false;
         while let Err(e) = &current_block_num {
             count += 1;
-            if count == 50 {
+            if count == config.error_limit {
                 logger.err(&format!("failed to request for height for {} err: {}",
                         config.bubble_name, e)).await;
                 println!("repairing {}",config.bubble_name);
@@ -146,6 +149,9 @@ pub async fn cola_kernel(
                     .eth()
                     .block_number()
                     .await;
+            if config.retry_delay != 0 {
+                delay_for(Duration::from_secs(config.retry_delay)).await;
+            }
         }
 
         if failure == true {
@@ -161,8 +167,6 @@ pub async fn cola_kernel(
         let current_block_num = current_block_num
             .min(num + config.max_block_range);
         if current_block_num < num {
-            logger.err(&format!("from height was bigger than to height {}",
-                config.bubble_name)).await;
             delay_for(Duration::from_secs((30) as u64)).await;
             continue;
         }
@@ -235,6 +239,8 @@ pub async fn cola_kernel(
         )
         .expect(&format!("error adding to db in {}",
                             config.bubble_name));
-        delay_for(Duration::from_secs((30) as u64)).await;
+        if config.delay != 0 {
+            delay_for(Duration::from_secs(config.delay)).await;
+        }
     }
 }

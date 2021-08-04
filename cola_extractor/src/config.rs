@@ -47,6 +47,9 @@ pub struct ColaConfig {
     pub chain_name: ChainType,
     pub events_data: Vec<EventConfig>,
     pub web3_instance: web3::Web3<Http>,
+    pub delay: u64,
+    pub retry_delay: u64,
+    pub error_limit: u64,
     pub emitter_address: Address,
     pub connection: Arc<DbPool>,
     pub bubble_id: i32,
@@ -157,6 +160,9 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                         web3::Web3::new(http)
                     }) 
                     .expect("can't find rpc_url");
+            let delay = cfg["delay"].as_u64().unwrap_or(30); 
+            let retry_delay = cfg["retry_delay"].as_u64().unwrap_or(0); 
+            let error_limit = cfg["error_limit"].as_u64().unwrap_or(0); 
             let emitter_address = match cfg["emitter_address"].as_str() {
                 Some(s) => s.parse::<Address>().expect("error parsing emmiter address"),
                 None => panic!("can't find emitter_address in {}",name),
@@ -178,6 +184,9 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                 emitter_address: emitter_address,
                 connection: pool.clone(),
                 max_block_range: max_block_range,
+                delay: delay,
+                retry_delay: retry_delay,
+                error_limit: error_limit,
             } 
         }).collect().await
 }
