@@ -162,7 +162,7 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                     .expect("can't find rpc_url");
             let delay = cfg["delay"].as_u64().unwrap_or(30); 
             let retry_delay = cfg["retry_delay"].as_u64().unwrap_or(0); 
-            let error_limit = cfg["error_limit"].as_u64().unwrap_or(0); 
+            let error_limit = cfg["request_error_limit"].as_u64().unwrap_or(50); 
             let emitter_address = match cfg["emitter_address"].as_str() {
                 Some(s) => s.parse::<Address>().expect("error parsing emmiter address"),
                 None => panic!("can't find emitter_address in {}",name),

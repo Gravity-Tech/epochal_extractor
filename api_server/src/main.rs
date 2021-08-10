@@ -75,7 +75,7 @@ async fn main() -> std::io::Result<()> {
     let pool = r2d2::Pool::builder()
         .build(manager)
         .expect("Failed to create pool.");
-    let bind = "0.0.0.0:8080";
+    let bind = "0.0.0.0:8088";
     println!("Starting server at: {}", &bind);
 
     HttpServer::new(move || {

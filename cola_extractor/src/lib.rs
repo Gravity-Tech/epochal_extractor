@@ -85,7 +85,6 @@ pub async fn proc_topic(
             if count == config.error_limit {
                 logger.err(&format!("failed to request for logs for {} err: {}",
                         config.bubble_name, e)).await;
-                println!("repairing {}",config.bubble_name);
                 failure = true;
             }
             let f = filter.clone();
@@ -141,7 +140,6 @@ pub async fn cola_kernel(
             if count == config.error_limit {
                 logger.err(&format!("failed to request for height for {} err: {}",
                         config.bubble_name, e)).await;
-                println!("repairing {}",config.bubble_name);
                 failure = true;
             }
             let current_block_num = config
@@ -172,9 +170,6 @@ pub async fn cola_kernel(
         }
         let current_block = BlockNumber::Number(current_block_num);
 
-        println!("going from block {} to {} in {}",num,
-            current_block_num,config.bubble_name);
-
         let mut result: Vec<(Uuid,String,i64,i32,i32)> = Vec::new();
         for ev in config.events_data.iter() {
             let r = proc_topic(
@@ -184,7 +179,6 @@ pub async fn cola_kernel(
                 config.clone(), 
                 logger.clone(),
             ).await;
-            println!("got data {:?}",r);
             match ev.db_action {
                 config::DBAction::Delete => {
                     let data:Vec<Uuid> = tokio_stream::iter(r)
