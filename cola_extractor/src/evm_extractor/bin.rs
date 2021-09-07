@@ -34,7 +34,8 @@ async fn main() {
             let l = logger.clone();
             tokio::spawn(async {
                 let cfg = Arc::new(cfg);
-                cola_kernel(cfg.clone(), l, &processor_default).await
+                println!("starting {} thread", cfg.bubble_name);
+                cola_kernel(cfg.clone(), l, &processor_default).await;
             })
         })
         .collect();

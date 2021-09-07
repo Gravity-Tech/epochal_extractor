@@ -82,9 +82,13 @@ pub async fn proc_topic(
         let mut failure = false;
         while let Err(e) = &r {
             count += 1;
+            if count > config.error_limit {
+                println!("retrying height in {}",config.bubble_name);
+            }
             if count == config.error_limit {
                 logger.err(&format!("failed to request for logs for {} err: {}",
                         config.bubble_name, e)).await;
+                panic!("restart container");
                 failure = true;
             }
             let f = filter.clone();
@@ -115,8 +119,6 @@ pub async fn cola_kernel(
     processor: &'static (dyn Fn(Log)->(Vec<u8>,u64) + Sync),
 ) -> ! { 
     loop {
-        println!("starting new iteration in {}\n time (utc): {}",
-            config.bubble_name,chrono::Utc::now());
         let num = database::load_num(
                 config.bubble_id, 
                 &config.connection.get()
@@ -137,9 +139,13 @@ pub async fn cola_kernel(
         let mut failure = false;
         while let Err(e) = &current_block_num {
             count += 1;
+            if count > config.error_limit {
+                println!("retrying height in {}",config.bubble_name);
+            }
             if count == config.error_limit {
                 logger.err(&format!("failed to request for height for {} err: {}",
                         config.bubble_name, e)).await;
+                panic!("restart container");
                 failure = true;
             }
             let current_block_num = config

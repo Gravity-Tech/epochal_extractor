@@ -59,6 +59,85 @@ pub fn push(
     Ok(())
 }
 
+pub mod reserves {
+
+    use super::*;
+    use diesel::sql_types::{
+        Double,
+        VarChar,
+        Array,
+        Integer,
+    };
+
+    #[derive(Debug,QueryableByName)]
+    pub struct FromData {
+        #[sql_type="VarChar"]
+        pub chain_short: String,
+        #[sql_type="VarChar"]
+        pub pool_address: String,
+        #[sql_type="Array<Integer>"]
+        pub modifier: Vec<i32>,
+        #[sql_type="Double"]
+        pub gton_reserves: f64,
+
+    }
+
+    pub fn get_reserves(
+            port: i32, 
+            conn_from: &PgConnection,
+        ) -> Result<Vec<FromData>,Error> {
+            Ok(diesel::sql_query("select
+                    c.chain_short,
+                    p.gton_reserves,
+                    p.modifier,
+                    p.pool_address
+                from pools p
+                    join dexes d on d.id = p.dex_id
+                    join chains c on c.id = d.chain_id;")
+            .load::<FromData>(conn_from).unwrap())
+        }
+    pub fn extract_reserves(
+            port: i32, 
+            data: Vec<(Uuid,String)>,
+            conn_to: &PgConnection,
+        ) -> Result<(),Error> {
+        conn_to.build_transaction()
+            .read_write()
+            .run::<(), diesel::result::Error, _>(|| {
+            let ct = chrono::Utc::now().naive_utc();
+            for d in data {
+                diesel::insert_into(extracted_data::table)
+                    .values(InsertableData{
+                        id: d.0,
+                        base64bytes: d.1,
+                        block_id: ct,
+                        priority: 0,
+                        port: port,
+                    })
+                    .execute(conn_to).unwrap();
+            }
+            Ok(())
+        })?;
+        Ok(())
+    }
+    pub fn delete(
+        ids: Vec<Uuid>, 
+        conn: &PgConnection
+    ) -> Result<(),Error> {
+        conn.build_transaction()
+            .read_write()
+            .run::<(), diesel::result::Error, _>(|| {
+                for id in ids {
+                    diesel::delete(extracted_data::table.filter(extracted_data::id.eq(id)))
+                    .execute(conn)?;
+                }
+                Ok(())
+            })?;
+        Ok(())
+    }
+}
+
+
 pub fn fetch(port: i32, conn: &PgConnection) -> Result<String,Error> {
     let data = extracted_data::table
         .order_by(&(
