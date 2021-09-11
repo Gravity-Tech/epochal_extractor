@@ -55,10 +55,12 @@ async fn main() {
     let source_pool = Arc::new(source_pool);
 
     let port: i32 = env::var("PORT").expect("port nor found").parse().unwrap();
-    reserves_transferer(port, source_pool, dest_pool).await;
+    let mins: u64 = env::var("DELAY_IN_MINS").expect("delay nor found").parse().unwrap();
+    reserves_transferer(mins, port, source_pool, dest_pool).await;
 }
 
 pub async fn reserves_transferer(
+    mins: u64,
     port: i32,
     pool_from: Arc<r2d2::Pool<ConnectionManager<PgConnection>>>,
     pool_to: Arc<r2d2::Pool<ConnectionManager<PgConnection>>>,
@@ -86,6 +88,6 @@ pub async fn reserves_transferer(
             .collect();
         println!("{:?}",data);   
         extract_reserves(port, data, &pool_to.get().unwrap()).unwrap();
-        delay_for(Duration::from_secs(60*10)).await;
+        delay_for(Duration::from_secs(60*mins)).await;
     }
 }
