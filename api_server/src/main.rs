@@ -9,6 +9,28 @@ use serde::{Deserialize, Serialize};
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 #[derive(Serialize,Deserialize)]
+struct NewSolana {
+    accountId: String,
+}
+
+#[post("/insert")]
+async fn insert(
+    pool: web::Data<DbPool>,
+    port: web::Data<NewSolana>,
+) -> Result<HttpResponse, Error> {
+    let conn = pool.get().expect("couldn't get db connection from pool");
+
+    // use web::block to offload blocking Diesel code without blocking server thread
+    let portion = web::block(move || database::fetch(port.0, &conn))
+        .await
+        .map_err(|e| {
+            eprintln!("{}", e);
+            HttpResponse::NotFound().finish()
+        })?;
+    Ok(HttpResponse::Ok().json(()))
+}
+
+#[derive(Serialize,Deserialize)]
 #[allow(non_snake_case)]
 struct Data {
     Type: String,
