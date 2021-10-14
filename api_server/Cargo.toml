@@ -10,7 +10,20 @@ edition = "2018"
 actix-web = "3"
 r2d2 = "0.8"
 dotenv = "0.15.0"
-serde = "1.0.124"
+serde = "1.0.118"
 env_logger = "0.8.3"
-database = { path = "../database" }
-diesel = { version = "1.4.4", features = ["postgres", "r2d2"] }
+serde_json = "1.0.68"
+base64 = "0.13.0"
+uuid = { version = "0.8", features = ["serde", "v4"] }
+diesel = { version = "1.4.4", features = ["postgres","numeric","uuid","uuidv07","r2d2","chrono"] }
+bigdecimal = "0.1.0"
+chrono = "0.4.19"
+reqwest = { version = "0.10.10", features = ["json"]}
+
+hex = "0.4.3"
+actix_web_dev = { git = "https://github.com/Engine-studio/actix-web-dev-tools" }
+actix-cors = "0.5.4"
+bs58 = "0.4.0"
+
+anchor-lang = "0.3.0"
+web3 = "0.17.0"

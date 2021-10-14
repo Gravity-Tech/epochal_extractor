@@ -9,10 +9,17 @@ table! {
 }
 
 table! {
+    solana_txns (id) {
+        id -> Int8,
+        key -> Varchar,
+        txn_id -> Varchar,
+    }
+}
+
+table! {
     processed_solana_data_accounts (id) {
         id -> Int8,
         account_id -> Varchar,
-        destination_txn_id -> Nullable<Varchar>,
     }
 }
 
@@ -26,5 +33,4 @@ table! {
 allow_tables_to_appear_in_same_query!(
     extracted_data,
     poller_states,
-    processed_solana_data_accounts,
 );

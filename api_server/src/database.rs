@@ -1,15 +1,10 @@
-pub mod config;
-#[macro_use]
-extern crate diesel;
-#[macro_use]
-extern crate serde;
+use anchor_lang::prelude::*;
 use diesel::prelude::*;
-use std::sync::Arc;
-pub mod schema;
+use std::{os::unix::prelude::OsStrExt, sync::Arc};
 use crate::schema::{
     extracted_data,
-    poller_states,
     processed_solana_data_accounts,
+    solana_txns,
 };
 use bigdecimal::BigDecimal;
 use diesel::result::Error;
@@ -17,12 +12,9 @@ use uuid::Uuid;
 use diesel::PgConnection;
 use base64;
 use diesel::r2d2::ConnectionManager;
+use web3::types::U256;
 use r2d2;
 pub type ConnPool = r2d2::Pool<ConnectionManager<PgConnection>>;
-use config::{
-    ChainInfo,
-    Info,
-};
 
 pub fn establish_connection(database_url: &str) -> ConnPool {
     let manager = ConnectionManager::<PgConnection>::new(database_url);
@@ -33,10 +25,18 @@ pub fn establish_connection(database_url: &str) -> ConnPool {
 
 pub async fn delete(
     row: String,
+    key: String,
+    txn: String,
     conn: &PgConnection,
 ) -> Result<(),Error> {
     diesel::delete(extracted_data::table)
         .filter(extracted_data::base64bytes.eq(row))
+        .execute(conn)?;
+    diesel::insert_into(solana_txns::table)
+        .values(&(
+            solana_txns::key.eq(key),
+            solana_txns::txn_id.eq(txn),
+        ))
         .execute(conn)?;
     Ok(())
 }
@@ -55,50 +55,78 @@ struct InsertableData {
 extern crate serde_json;
 extern crate hex;
 
+#[account(zero_copy)]
+#[derive(Debug)]
+pub struct RelayEvent {
+    pub to: [u8;64],
+    pub dest_chain: [u8;3],
+    pub amount: u64,
+    pub from: Pubkey,
+    pub token_program: Pubkey,
+    pub transfer_destination: Pubkey,
+}
+
+
 fn into_extractor_bytes(inp: &str,
-    token_program_true: &[u8], 
-    token_destination_true: &[u8]) -> (Uuid,String) {
-    let bin_data = base64::decode(inp).unwrap();
-    let to = &bin_data[0..20];
-    let chain = &bin_data[64..67];
-    use std::convert::TryInto;
-    let amount = f64::from_ne_bytes((&bin_data[67..75]).try_into().unwrap());
-    //let from = &bin_data[75..107];
-    let token_program = &bin_data[107..139];
-    let token_destination = &bin_data[139..139+32];
-    if token_destination != token_destination_true 
-        && token_destination != token_destination_true {
+    token_program: &[u8], 
+    token_destination: &[u8]) -> (Uuid,String,i32) {
+    println!("row data base {:?}",inp);
+    let mut bin_data = base64::decode(inp).unwrap();
+    let data = RelayEvent::deserialize(&mut &bin_data[8..]).unwrap();
+    println!("data {:?}",data);
+    if token_destination != &data.transfer_destination.to_bytes() 
+        && token_program != &data.token_program.to_bytes() {
         panic!();
     }
+
+    let amount = U256::from(data.amount);
+    let mut amount_buffer = [0u8;32];
+    amount.to_big_endian(&mut amount_buffer);
 
     let id = uuid::Uuid::new_v4();
     let mut by: Vec<u8> = Vec::new();
     by.extend_from_slice(id.as_bytes());
-    by.extend_from_slice(chain);
+    by.extend_from_slice(&data.dest_chain);
     by.extend_from_slice(&[0u8;20]);
     by.extend_from_slice(&[3u8;1]);
     by.extend_from_slice(
-        hex::decode("0xa4f88aed847e87bafdc18210d88464dc24f71fa4bf1b4672710c9bc876bb0044")
+        hex::decode("a4f88aed847e87bafdc18210d88464dc24f71fa4bf1b4672710c9bc876bb0044")
         .unwrap()
         .as_ref());
     by.extend_from_slice(&[0u8;4*32]);
-    by.extend_from_slice(&[0]); // amount
+    by.extend_from_slice(&amount_buffer); // amount
     by.extend_from_slice(&[0u8;32+29]);
-    by.extend_from_slice(chain); 
+    by.extend_from_slice(&data.dest_chain); 
     by.extend_from_slice(&[0u8;32]);
-    by.extend_from_slice(to);
-    (id,base64::encode(by))
+    by.extend_from_slice(&data.to[0..32]);
+
+    let prt: i32 = match data.dest_chain {
+        [0,0,1] =>  8088,
+        [0,0,2] =>  8089,
+        [0,0,3] =>  8090, 
+        [0,0,4] =>  8091,
+        [0,0,5] =>  8092,
+        [0,0,6] =>  8093,
+        [0,0,7] =>  8094,
+        [0,0,8] =>  8095,
+        [0,0,0] =>  8096,
+        _ => panic!(),
+    };
+    (id,base64::encode(by),prt)
 }
 
 pub async fn get_txn_id(
-    account_id: String,
+    key: String,
     conn: &PgConnection,
 ) -> Result<Option<String>,Error> {
-    let r = processed_solana_data_accounts::table.filter(
-        processed_solana_data_accounts::account_id.eq(&account_id))
-        .select(processed_solana_data_accounts::destination_txn_id)
-        .get_result::<Option<String>>(conn).unwrap();
-    Ok(r)
+    let r = solana_txns::table.filter(
+        solana_txns::key.eq(&key))
+        .select(solana_txns::txn_id)
+        .get_results::<String>(conn).unwrap();
+    Ok(match r.len() {
+        0 => None,
+        _ => Some(r[0].clone()),
+    })
 }
 
 pub async fn push(
@@ -107,18 +135,21 @@ pub async fn push(
     port: i32,
     state_auht: &[u8], 
     market_auth: &[u8],
+    owner: &str,
     conn: &PgConnection,
 ) -> Result<(),Error> {
+    println!("try");
     let dat: Vec<i64> = processed_solana_data_accounts::table.filter(
         processed_solana_data_accounts::account_id.eq(&account_id))
         .select(processed_solana_data_accounts::id)
         .get_results(conn).unwrap();
+    println!("try panic");
     if dat.len() != 0 {
         panic!();
     }
     println!("valid");
     let client = reqwest::Client::new();
-    let res: serde_json::Value = client.post(rpc_url)
+    let res: serde_json::Value = client.post(&rpc_url)
         .json(&serde_json::json!({
             "jsonrpc": "2.0",
                 "id": 1,
@@ -126,7 +157,7 @@ pub async fn push(
                 "params": [
                   account_id,
                   {
-                    "encoding": "base64encoded"
+                    "encoding": "base64"
                   }
                 ]
         }))
@@ -137,10 +168,14 @@ pub async fn push(
         .await
         .unwrap();
 
-    let res = res["result"]["value"]["data"].as_str().unwrap();
     println!("{:?}",res);
+    let r = res["result"]["value"]["data"][0].as_str().unwrap();
+    let owner_try = res["result"]["value"]["owner"].as_str().unwrap();
+    if owner != owner_try {
+        panic!();
+    }
 
-    let (id,base64bytes) = into_extractor_bytes(res,state_auht,market_auth);
+    let (id,base64bytes,prt) = into_extractor_bytes(r,state_auht,market_auth);
     let ct = chrono::Utc::now().naive_utc();
     diesel::insert_into(extracted_data::table)
     .values(InsertableData{
@@ -148,9 +183,12 @@ pub async fn push(
         base64bytes,
         block_id: ct,
         priority: 0,
-        port,
+        port: prt,
     })
     .execute(conn)?;
+    diesel::insert_into(processed_solana_data_accounts::table)
+        .values(processed_solana_data_accounts::account_id.eq(account_id))
+        .execute(conn)?;
     println!("inserted");
     Ok(())
 }

@@ -1,8 +1,20 @@
-FROM rust:1.50 as builder
+FROM rustlang/rust:nightly-buster as builder
 
-WORKDIR /extractor
-COPY . .
-RUN cargo clean
+RUN USER=root cargo new --bin api_server
+WORKDIR /api_server
+
+# copy over your manifests
+COPY ./Cargo.toml ./Cargo.toml
+
+# this build step will cache your dependencies
+RUN cargo build --release
+RUN rm src/*.rs
+
+# copy your source tree
+COPY ./src ./src
+#COPY ./contracts ./contracts
+#COPY . .
+
 RUN cargo build --release
 
 FROM debian:buster-slim
@@ -16,18 +28,8 @@ RUN apt-get update && \
         --no-install-recommends
 RUN apt-get update && apt-get -y install ca-certificates libssl-dev && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /extractor/target/release/api_server /api_server/api_server
-WORKDIR /api_server
+COPY --from=builder /api_server/target/release/api_server /api_server/api_server
+WORKDIR /api_server/
 EXPOSE 8088
-EXPOSE 8089
-EXPOSE 8090
-EXPOSE 8091
-EXPOSE 8092
-EXPOSE 8093
-EXPOSE 8094
-EXPOSE 8095
-EXPOSE 8096
-EXPOSE 8097
-
 
 CMD ["/api_server/api_server"]
