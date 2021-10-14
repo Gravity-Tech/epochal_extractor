@@ -5,7 +5,6 @@ extern crate diesel;
 #[macro_use]
 extern crate serde;
 pub mod schema;
-///
 use actix_web::{post, get, middleware, web, App, Error, HttpResponse, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
