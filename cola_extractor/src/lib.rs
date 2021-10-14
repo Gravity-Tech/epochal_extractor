@@ -3,9 +3,13 @@ use tokio::time::{
     Duration
 };
 pub mod config;
+pub mod database;
+pub mod schema;
+
+#[macro_use]
+extern crate diesel;
 
 use tokio_stream::StreamExt;
-use database;
 //adsfdsfasdf
 
 use web3::types::*;

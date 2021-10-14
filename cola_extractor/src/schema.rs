@@ -2,8 +2,9 @@ table! {
     extracted_data (id) {
         id -> Uuid,
         base64bytes -> Varchar,
-        block_id -> Int8,
+        block_id -> Timestamp,
         priority -> Int4,
+        port -> Int4,
     }
 }
 

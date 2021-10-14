@@ -1,20 +1,17 @@
-FROM rustlang/rust:nightly as builder
+FROM rustlang/rust:nightly-buster as builder
 
-ARG name
+RUN USER=root cargo new --bin cola_extractor 
+WORKDIR /cola_extractor
 
-RUN USER=root cargo new --bin $name
-WORKDIR /$name
-
+COPY . .
 # copy over your manifests
-COPY ./Cargo.toml ./Cargo.toml
+#COPY ./Cargo.toml ./Cargo.toml
 
 # this build step will cache your dependencies
-COPY . .
 RUN cargo build --release
 #RUN rm src/*.rs
 
-# copy your source tree
-#RUN rm ./target/release/deps/$name*
+#copy your source tree
 #COPY ./src ./src
 
 #RUN cargo build --release
@@ -30,8 +27,8 @@ RUN apt-get update && \
         --no-install-recommends
 RUN apt-get update && apt-get -y install ca-certificates libssl-dev && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /$name/target/release/$name /$name/$name
-WORKDIR /$name/
+COPY --from=builder /cola_extractor/target/release/cola_extractor /cola_extractor/cola_extractor
+WORKDIR /cola_extractor/
 
 
-CMD ["/$name/$name"]
+CMD ["/cola_extractor/cola_extractor"]

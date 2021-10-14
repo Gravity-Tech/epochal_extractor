@@ -103,6 +103,7 @@ pub async fn parse_config(filename: String) -> Vec<ColaConfig> {
                         "HEC" => ChainType::HEC,
                         "DAI" => ChainType::DAI,
                         "AVA" => ChainType::AVA,
+                        "SOL" => ChainType::SOL,
                         _ => panic!("wrong chain name {} presented",s),
                     }
                 None => panic!("can't find chain name in {}",name),
